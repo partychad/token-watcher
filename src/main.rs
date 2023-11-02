@@ -22,16 +22,22 @@ pub async fn make_post_request_with_header(
 
 #[tokio::main]
 async fn main() {
-   match query_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356", "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7").await {
+    let wavax_balance = query_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356", "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7");
+    let avax_balance = query_eth_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356");
+
+    let (wavax_balance_result, avax_balance_result) = tokio::join!(wavax_balance, avax_balance);
+
+    match wavax_balance_result {
         Ok(balance) => println!("Balance: {}", balance),
         Err(error) => println!("Error: {}", error),
     }
 
-    match query_eth_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356").await {
+    match avax_balance_result {
         Ok(balance) => println!("Balance: {}", balance),
         Err(error) => println!("Error: {}", error),
     }
 }
+
 
 fn keccak256(bytes: &[u8]) -> [u8; 32] {
     web3_hash_utils::keccak256(bytes)
