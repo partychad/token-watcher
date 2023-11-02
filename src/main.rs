@@ -1,5 +1,3 @@
-use std::ffi::c_float;
-
 use hex;
 use http::{header};
 use reqwest;
@@ -55,7 +53,7 @@ fn encode(signature: &str, address: &str) -> String {
 }
 
 
-async fn query_balance_of(address: &str, token_address:&str) -> Result<c_float, Box<dyn std::error::Error>> {
+async fn query_balance_of(address: &str, token_address:&str) -> Result<f32, Box<dyn std::error::Error>> {
     let encoded_params = encode("balanceOf(address)", address);
     const DECIMAL: u128 = 10_u128.pow(18);
     let data = json!({
@@ -96,7 +94,7 @@ async fn query_balance_of(address: &str, token_address:&str) -> Result<c_float, 
     Ok(balance as f32 / DECIMAL as f32 )
 }
 
-async fn query_eth_balance_of(address: &str) -> Result<c_float, Box<dyn std::error::Error>> {
+async fn query_eth_balance_of(address: &str) -> Result<f32, Box<dyn std::error::Error>> {
     const DECIMAL: u128 = 10_u128.pow(18);
     let data = json!({
         "jsonrpc":"2.0",
