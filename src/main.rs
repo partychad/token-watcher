@@ -1,6 +1,4 @@
-use hex;
 use http::{header};
-use reqwest;
 use serde_json::json;
 use tokio::time::{interval, Duration};
 
@@ -23,7 +21,7 @@ pub async fn make_post_request_with_header(
 
 #[tokio::main]
 async fn main() {
-
+    welcome_text();
     let mut interval = interval(Duration::from_secs(1));
     let mut previous_balance: Option<f32> = None;
     loop {
@@ -70,7 +68,16 @@ async fn calculate_wallet_balance() -> Result<f32, Box<dyn std::error::Error>>{
    Ok(wavax + avax)
 }
 
-
+fn welcome_text () {
+        println!(r#"
+    ___________________   ____  __.___________ _______     __      __  _________________________   ___ ________________________ 
+    \__    ___/\_____  \ |    |/ _|\_   _____/ \      \   /  \    /  \/  _  \__    ___/\_   ___ \ /   |   \_   _____/\______   \
+      |    |    /   |   \|      <   |    __)_  /   |   \  \   \/\/   /  /_\  \|    |   /    \  \//    ~    \    __)_  |       _/
+      |    |   /    |    \    |  \  |        \/    |    \  \        /    |    \    |   \     \___\    Y    /        \ |    |   \
+      |____|   \_______  /____|__ \/_______  /\____|__  /   \__/\  /\____|__  /____|    \______  /\___|_  /_______  / |____|_  /
+                       \/        \/        \/         \/         \/         \/                 \/       \/        \/         \/ 
+        "#);
+}
 
 fn keccak256(bytes: &[u8]) -> [u8; 32] {
     web3_hash_utils::keccak256(bytes)
