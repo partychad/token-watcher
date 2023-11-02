@@ -114,7 +114,6 @@ async fn query_balance_of(address: &str, token_address:&str) -> Result<f32, Box<
     .await
     {
         Ok(response) => {
-            println!("Response: {}", response);
             response
         }
         Err(error) => {
@@ -150,7 +149,6 @@ async fn query_eth_balance_of(address: &str) -> Result<f32, Box<dyn std::error::
     .await
     {
         Ok(response) => {
-            println!("Response: {}", response);
             response
         }
         Err(error) => {
