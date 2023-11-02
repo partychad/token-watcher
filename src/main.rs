@@ -2,6 +2,7 @@ use hex;
 use http::{header};
 use reqwest;
 use serde_json::json;
+use tokio::time::{interval, Duration};
 
 pub async fn make_post_request_with_header(
     url: &str,
@@ -22,21 +23,52 @@ pub async fn make_post_request_with_header(
 
 #[tokio::main]
 async fn main() {
+
+    let mut interval = interval(Duration::from_secs(1));
+    let mut previous_balance: Option<f32> = None;
+    loop {
+        interval.tick().await;
+        let balance = match calculate_wallet_balance().await {
+            Ok(balance) => balance,
+            Err(error) => {
+                println!("Error: {}", error);
+                continue;
+            }
+        };
+        match previous_balance {
+            Some(previous_balance) => {
+                if balance != previous_balance {
+                    println!("Balance has changed: {}", balance);
+                }
+            }
+            None => {
+                println!("Balance: {}", balance);
+            }
+        }
+        previous_balance = Some(balance);
+    }
+   
+}
+
+async fn calculate_wallet_balance() -> Result<f32, Box<dyn std::error::Error>>{
     let wavax_balance = query_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356", "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7");
     let avax_balance = query_eth_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356");
 
     let (wavax_balance_result, avax_balance_result) = tokio::join!(wavax_balance, avax_balance);
 
-    match wavax_balance_result {
-        Ok(balance) => println!("Balance: {}", balance),
-        Err(error) => println!("Error: {}", error),
-    }
+    let wavax = match wavax_balance_result {
+        Ok(balance) => {println!("Balance: {}", balance) ; balance} ,
+        Err(error) => {println!("Error: {}", error); return Err(error);},
+    };
 
-    match avax_balance_result {
-        Ok(balance) => println!("Balance: {}", balance),
-        Err(error) => println!("Error: {}", error),
-    }
+    let avax = match avax_balance_result {
+        Ok(balance) => {println!("Balance: {}", balance) ; balance},
+        Err(error) => {println!("Error: {}", error); return Err(error);},
+    };
+
+   Ok(wavax + avax)
 }
+
 
 
 fn keccak256(bytes: &[u8]) -> [u8; 32] {
