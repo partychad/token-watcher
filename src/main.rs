@@ -7,27 +7,14 @@ use serde_json::json;
 
 pub async fn make_post_request_with_header(
     url: &str,
-    to: &str,
-    data: &str,
-    id: u16,
+    json: &serde_json::Value,
 ) -> Result<String, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let response = client
         .post(url)
         .header(header::CONTENT_TYPE, "application/json")
-        .json(&json!({
-            "jsonrpc":"2.0",
-            "method":"eth_call",
-            "params": [
-            {
-                "to": to,
-                "data": data
-            },
-            "latest"
-            ],
-            "id": id
-        }))
+        .json(json)
         .send()
         .await?;
 
@@ -38,6 +25,11 @@ pub async fn make_post_request_with_header(
 #[tokio::main]
 async fn main() {
    match query_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356", "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7").await {
+        Ok(balance) => println!("Balance: {}", balance),
+        Err(error) => println!("Error: {}", error),
+    }
+
+    match query_eth_balance_of("0x43BF8DB4Ca35dBd9343b3f49DF1D82077b51b356").await {
         Ok(balance) => println!("Balance: {}", balance),
         Err(error) => println!("Error: {}", error),
     }
@@ -64,13 +56,24 @@ fn encode(signature: &str, address: &str) -> String {
 
 
 async fn query_balance_of(address: &str, token_address:&str) -> Result<c_float, Box<dyn std::error::Error>> {
-    let data = encode("balanceOf(address)", address);
+    let encoded_params = encode("balanceOf(address)", address);
     const DECIMAL: u128 = 10_u128.pow(18);
+    let data = json!({
+        "jsonrpc":"2.0",
+        "method":"eth_call",
+        "params": [
+        {
+            "to": token_address,
+            "data": encoded_params
+        },
+        "latest"
+        ],
+        "id": 1
+    });
+
     let response_data = match make_post_request_with_header(
         "https://api.avax.network/ext/bc/C/rpc",
-        token_address,
-        &data,
-        1,
+        &data
     )
     .await
     {
@@ -93,3 +96,39 @@ async fn query_balance_of(address: &str, token_address:&str) -> Result<c_float, 
     Ok(balance as f32 / DECIMAL as f32 )
 }
 
+async fn query_eth_balance_of(address: &str) -> Result<c_float, Box<dyn std::error::Error>> {
+    const DECIMAL: u128 = 10_u128.pow(18);
+    let data = json!({
+        "jsonrpc":"2.0",
+        "method":"eth_getBalance",
+        "params": [
+        address,
+        "latest"
+        ],
+        "id": 1
+    });
+    let response_data = match make_post_request_with_header(
+        "https://api.avax.network/ext/bc/C/rpc",
+        &data
+    )
+    .await
+    {
+        Ok(response) => {
+            println!("Response: {}", response);
+            response
+        }
+        Err(error) => {
+            println!("Error: {}", error);
+            return Err(Box::new(error));
+        }
+    };
+
+    let response_json: serde_json::Value = serde_json::from_str(&response_data)?;
+    let content = response_json["result"].as_str().unwrap_or_default();
+
+    // Convert the content (hex string) to u128
+    let balance = u128::from_str_radix(content.trim_start_matches("0x"), 16)?;
+
+    Ok(balance as f32 / DECIMAL as f32 )
+
+}
