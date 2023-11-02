@@ -40,9 +40,10 @@ async fn main() {
                 if balance != previous_balance {
                     println!("Balance has changed: {}", balance);
                 }
+                else {
+                }
             }
             None => {
-                println!("Balance: {}", balance);
             }
         }
         previous_balance = Some(balance);
@@ -57,12 +58,12 @@ async fn calculate_wallet_balance() -> Result<f32, Box<dyn std::error::Error>>{
     let (wavax_balance_result, avax_balance_result) = tokio::join!(wavax_balance, avax_balance);
 
     let wavax = match wavax_balance_result {
-        Ok(balance) => {println!("Balance: {}", balance) ; balance} ,
+        Ok(balance) => { balance} ,
         Err(error) => {println!("Error: {}", error); return Err(error);},
     };
 
     let avax = match avax_balance_result {
-        Ok(balance) => {println!("Balance: {}", balance) ; balance},
+        Ok(balance) => { balance},
         Err(error) => {println!("Error: {}", error); return Err(error);},
     };
 
